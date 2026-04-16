@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import API from "../config";
 
 function Register() {
   const navigate = useNavigate();
@@ -12,8 +13,6 @@ function Register() {
   });
 
   const [loading, setLoading] = useState(false);
-
-  const API = "https://online-voting-system-full-3.onrender.com";
 
   const handleChange = (e) => {
     setFormData({
@@ -57,9 +56,8 @@ function Register() {
         alert(data.message || "Registration failed");
       }
     } catch (error) {
-  console.error("Register error:", error);
-  alert("Server error: " + error.message);
-}
+      console.error("Register error:", error);
+      alert("Server error");
     } finally {
       setLoading(false);
     }

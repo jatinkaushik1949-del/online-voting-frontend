@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ThemeContext } from "../context/ThemeContext";
+import API from "../config";
 
 function Login() {
   const navigate = useNavigate();
@@ -17,8 +18,6 @@ function Login() {
     status: "live",
     createdAt: "",
   });
-
-  const API = "https://online-voting-system-full-3.onrender.com";
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -78,9 +77,8 @@ function Login() {
         alert(data.message || "Login failed");
       }
     } catch (error) {
-  console.error("User login error:", error);
-  alert("Server error: " + error.message);
-}
+      console.error("User login error:", error);
+      alert("Server error");
     } finally {
       setUserLoading(false);
     }
