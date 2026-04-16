@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import API from "../config";
 
 function Results() {
   const navigate = useNavigate();
-  const API = "https://online-voting-system-full-3.onrender.com";
 
   const [loading, setLoading] = useState(true);
   const [savingElection, setSavingElection] = useState(false);
@@ -19,14 +19,14 @@ function Results() {
   });
 
   useEffect(() => {
-  loadDashboard();
+    loadDashboard();
 
-  const interval = setInterval(() => {
-    loadDashboard(false);
-  }, 5000);
+    const interval = setInterval(() => {
+      loadDashboard(false);
+    }, 5000);
 
-  return () => clearInterval(interval);
-}, []);
+    return () => clearInterval(interval);
+  }, []);
 
   const loadDashboard = async (showLoader = true) => {
     if (showLoader) setLoading(true);
@@ -37,6 +37,16 @@ function Results() {
         fetch(`${API}/api/voters`),
         fetch(`${API}/api/results`),
       ]);
+
+      if (!electionRes.ok) {
+        throw new Error(`/api/election failed: ${electionRes.status}`);
+      }
+      if (!votersRes.ok) {
+        throw new Error(`/api/voters failed: ${votersRes.status}`);
+      }
+      if (!resultsRes.ok) {
+        throw new Error(`/api/results failed: ${resultsRes.status}`);
+      }
 
       const electionData = await electionRes.json();
       const votersData = await votersRes.json();
@@ -49,22 +59,24 @@ function Results() {
         });
       }
 
-      if (votersData.success && Array.isArray(votersData.voters)) {
-        setVoters(votersData.voters);
-      } else {
-        setVoters([]);
-      }
+      setVoters(
+        votersData.success && Array.isArray(votersData.voters)
+          ? votersData.voters
+          : []
+      );
 
-      if (resultsData.success && Array.isArray(resultsData.results)) {
-        setResults(resultsData.results);
-      } else {
-        setResults([]);
-      }
+      setResults(
+        resultsData.success && Array.isArray(resultsData.results)
+          ? resultsData.results
+          : []
+      );
 
       setLastUpdated(new Date().toLocaleTimeString());
     } catch (error) {
-      console.error("Dashboard load error:", error);
-      if (showLoader) alert("Failed to load admin dashboard");
+      console.error("Admin dashboard load error:", error);
+      if (showLoader) {
+        alert(`Failed to load admin dashboard: ${error.message}`);
+      }
     } finally {
       if (showLoader) setLoading(false);
     }
@@ -112,9 +124,8 @@ function Results() {
 
   const handleResetElection = async () => {
     const confirmed = window.confirm(
-      "Are you sure you want to reset the election? This will remove all votes and reset all voters."
+      "Are you sure you want to reset the election?"
     );
-
     if (!confirmed) return;
 
     setResettingElection(true);
@@ -214,7 +225,6 @@ function Results() {
     }));
 
     const allRows = [...voterRows, ...resultRows];
-
     const headers = [
       "type",
       "name",
