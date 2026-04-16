@@ -78,8 +78,9 @@ function Login() {
         alert(data.message || "Login failed");
       }
     } catch (error) {
-      console.error("User login error:", error);
-      alert("Server error");
+  console.error("User login error:", error);
+  alert("Server error: " + error.message);
+}
     } finally {
       setUserLoading(false);
     }

@@ -57,8 +57,9 @@ function Register() {
         alert(data.message || "Registration failed");
       }
     } catch (error) {
-      console.error("Register error:", error);
-      alert("Server error");
+  console.error("Register error:", error);
+  alert("Server error: " + error.message);
+}
     } finally {
       setLoading(false);
     }

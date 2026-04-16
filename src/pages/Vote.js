@@ -12,7 +12,7 @@ function Vote() {
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const API = "https://online-voting-system-full-3.onrender.com";
+const API = "https://online-voting-system-full-3.onrender.com";
 
   const parties = [
     {
