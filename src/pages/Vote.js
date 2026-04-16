@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import API from "../config";
 
 import bjpLogo from "../assets/bjp.png";
 import congressLogo from "../assets/congress.png";
@@ -11,8 +12,6 @@ function Vote() {
   const [selectedParty, setSelectedParty] = useState("");
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-
-const API = "https://online-voting-system-full-3.onrender.com";
 
   const parties = [
     {
@@ -72,15 +71,15 @@ const API = "https://online-voting-system-full-3.onrender.com";
       const data = await res.json();
 
       if (data.success) {
-  setShowSuccess(true);
+        setShowSuccess(true);
 
-  setTimeout(() => {
-    setShowSuccess(false);
-    localStorage.removeItem("loggedInUser");
-    localStorage.removeItem("sessionStartTime");
-    navigate("/");
-  }, 1800);
-}else {
+        setTimeout(() => {
+          setShowSuccess(false);
+          localStorage.removeItem("loggedInUser");
+          localStorage.removeItem("sessionStartTime");
+          navigate("/");
+        }, 1800);
+      } else {
         alert(data.message || "Vote failed");
       }
     } catch (error) {
@@ -118,7 +117,7 @@ const API = "https://online-voting-system-full-3.onrender.com";
             100% { transform: rotate(360deg); }
           }
 
-          @keyframes fadeInScale {
+          @keyframes voteSuccessPop {
             0% { opacity: 0; transform: scale(0.9); }
             100% { opacity: 1; transform: scale(1); }
           }
@@ -143,11 +142,6 @@ const API = "https://online-voting-system-full-3.onrender.com";
             border-top: 3px solid #fff;
             border-radius: 50%;
             animation: spinLoader 0.8s linear infinite;
-          }
-
-          @keyframes voteSuccessPop {
-            0% { opacity: 0; transform: scale(0.9); }
-            100% { opacity: 1; transform: scale(1); }
           }
 
           .vote-success-pop {
