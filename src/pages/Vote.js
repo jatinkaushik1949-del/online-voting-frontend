@@ -72,13 +72,6 @@ function Vote() {
 
       if (data.success) {
         setShowSuccess(true);
-
-        setTimeout(() => {
-          setShowSuccess(false);
-          localStorage.removeItem("loggedInUser");
-          localStorage.removeItem("sessionStartTime");
-          navigate("/");
-        }, 1800);
       } else {
         alert(data.message || "Vote failed");
       }
@@ -157,6 +150,15 @@ function Vote() {
               <div style={styles.successIcon}>✅</div>
               <h2 style={styles.successTitle}>Vote Submitted Successfully</h2>
               <p style={styles.successText}>Your vote has been recorded safely.</p>
+
+              <div style={styles.successBtnRow}>
+                <button style={styles.successBtnPrimary} onClick={() => setShowSuccess(false)}>
+                  OK
+                </button>
+                <button style={styles.successBtnSecondary} onClick={() => navigate("/")}>
+                  Go Home
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -452,6 +454,31 @@ const styles = {
     margin: 0,
     color: "#475569",
     fontSize: "16px",
+  },
+  successBtnRow: {
+    display: "flex",
+    gap: "12px",
+    justifyContent: "center",
+    marginTop: "20px",
+    flexWrap: "wrap",
+  },
+  successBtnPrimary: {
+    background: "#2563eb",
+    color: "#fff",
+    border: "none",
+    padding: "12px 18px",
+    borderRadius: "10px",
+    cursor: "pointer",
+    fontWeight: "700",
+  },
+  successBtnSecondary: {
+    background: "#e5e7eb",
+    color: "#111827",
+    border: "none",
+    padding: "12px 18px",
+    borderRadius: "10px",
+    cursor: "pointer",
+    fontWeight: "700",
   },
 };
 

@@ -19,14 +19,14 @@ function Results() {
   });
 
   useEffect(() => {
-    loadDashboard();
+  loadDashboard();
 
-    const interval = setInterval(() => {
-      loadDashboard(false);
-    }, 10000);
+  const interval = setInterval(() => {
+    loadDashboard(false);
+  }, 5000);
 
-    return () => clearInterval(interval);
-  }, []);
+  return () => clearInterval(interval);
+}, []);
 
   const loadDashboard = async (showLoader = true) => {
     if (showLoader) setLoading(true);
