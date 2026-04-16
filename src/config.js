@@ -1,3 +1,3 @@
-const API = "https://online-voting-system-full-3.onrender.com";
+const API = "https://online-voting-backend-4ajp.onrender.com";
 
 export default API;
