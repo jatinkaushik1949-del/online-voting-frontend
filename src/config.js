@@ -1,5 +1,1 @@
-MONGO_URI=YOUR_MONGODB_CONNECTION_STRING
-PORT=5000
-
-EMAIL_USER=yourgmail@gmail.com
-EMAIL_PASS=your_gmail_app_password
+export const API_URL = "https://online-voting-backend-4ajp.onrender.com";
