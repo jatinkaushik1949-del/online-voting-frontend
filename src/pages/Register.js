@@ -6,12 +6,13 @@ function Register() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-  name: "",
-  email: "",
-  voterId: "",
-  aadhaar: "",
-  mobile: "",
-});
+    name: "",
+    email: "",
+    voterId: "",
+    password: "",
+    aadhaar: "",
+    mobile: "",
+  });
 
   const [loading, setLoading] = useState(false);
 
@@ -25,10 +26,26 @@ function Register() {
   const handleRegister = async (e) => {
     e.preventDefault();
 
-    const { name, email, voterId, password } = formData;
+    const { name, email, voterId, password, aadhaar, mobile } = formData;
 
-    if (!name.trim() || !email.trim() || !voterId.trim()) {
-      alert("Please fill name, email and voter ID");
+    if (
+      !name.trim() ||
+      !email.trim() ||
+      !voterId.trim() ||
+      !aadhaar.trim() ||
+      !mobile.trim()
+    ) {
+      alert("Please fill all required fields");
+      return;
+    }
+
+    if (aadhaar.trim().length !== 12) {
+      alert("Aadhaar number must be 12 digits");
+      return;
+    }
+
+    if (mobile.trim().length !== 10) {
+      alert("Mobile number must be 10 digits");
       return;
     }
 
@@ -41,18 +58,19 @@ function Register() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-  name,
-  email,
-  voterId,
-  aadhaar,
-  mobile
-})
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          voterId: voterId.trim(),
+          password: password.trim(),
+          aadhaar: aadhaar.trim(),
+          mobile: mobile.trim(),
+        }),
       });
 
       const data = await res.json();
 
       if (data.success) {
-        alert("Registration successful");
+        alert("Registration successful. Please wait for admin approval.");
         navigate("/");
       } else {
         alert(data.message || "Registration failed");
@@ -107,21 +125,24 @@ function Register() {
             value={formData.password}
             onChange={handleChange}
           />
-          <input
-  type="text"
-  name="aadhaar"
-  placeholder="Aadhaar Number"
-  value={formData.aadhaar}
-  onChange={handleChange}
-/>
 
-<input
-  type="text"
-  name="mobile"
-  placeholder="Mobile Number"
-  value={formData.mobile}
-  onChange={handleChange}
-/>
+          <input
+            style={styles.input}
+            type="text"
+            name="aadhaar"
+            placeholder="Aadhaar Number"
+            value={formData.aadhaar}
+            onChange={handleChange}
+          />
+
+          <input
+            style={styles.input}
+            type="text"
+            name="mobile"
+            placeholder="Mobile Number"
+            value={formData.mobile}
+            onChange={handleChange}
+          />
 
           <button style={styles.button} type="submit" disabled={loading}>
             {loading ? "Please wait..." : "Register"}
