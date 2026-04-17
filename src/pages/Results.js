@@ -230,10 +230,10 @@ function Results() {
     );
   }, [voters, searchTerm]);
 
-  const pendingUsers = useMemo(
-    () => voters.filter((voter) => voter.emailVerified && !voter.isApproved),
-    [voters]
-  );
+ const pendingUsers = useMemo(
+  () => voters.filter((voter) => voter.emailVerified && !voter.isApproved),
+  [voters]
+);
 
   const getPercentage = (votes) => {
     if (!totalVotes) return 0;
@@ -367,77 +367,70 @@ function Results() {
         </div>
 
         {pendingUsers.length > 0 && (
-          <div style={styles.pendingSection}>
-            <div style={styles.pendingHeader}>
-              <h2 style={styles.pendingTitle}>Pending Approvals</h2>
-              <span style={styles.pendingCount}>
-                {pendingUsers.length} Pending
-              </span>
+  <div style={styles.pendingSection}>
+    <div style={styles.pendingHeader}>
+      <h2 style={styles.pendingTitle}>Pending Approvals</h2>
+      <span style={styles.pendingCount}>
+        {pendingUsers.length} Pending
+      </span>
+    </div>
+
+    <div style={styles.pendingGrid}>
+      {pendingUsers.map((user, index) => (
+        <div key={user.email || index} style={styles.pendingCard}>
+          <div style={styles.pendingTop}>
+            <div style={styles.pendingUserText}>
+              <h3 style={styles.pendingName}>
+                {user.name || "Unnamed User"}
+              </h3>
+              <p style={styles.pendingEmail}>{user.email || "No email"}</p>
+            </div>
+            <span style={styles.pendingBadge}>Pending</span>
+          </div>
+
+          <div style={styles.pendingInfoGrid}>
+            <div style={styles.pendingInfoItem}>
+              <span style={styles.pendingLabel}>Voter ID</span>
+              <strong style={styles.pendingValue}>
+                {user.voterId || "N/A"}
+              </strong>
             </div>
 
-            <div style={styles.pendingGrid}>
-              {pendingUsers.map((user, index) => (
-                <div key={user.email || index} style={styles.pendingCard}>
-                  <div style={styles.pendingTop}>
-                    <div style={styles.pendingUserText}>
-                      <h3 style={styles.pendingName}>
-                        {user.name || "Unnamed User"}
-                      </h3>
-                      <p style={styles.pendingEmail}>{user.email || "No email"}</p>
-                    </div>
-                    <span style={styles.pendingBadge}>Pending</span>
-                  </div>
+            <div style={styles.pendingInfoItem}>
+              <span style={styles.pendingLabel}>Mobile</span>
+              <strong style={styles.pendingValue}>
+                {user.mobile || "N/A"}
+              </strong>
+            </div>
 
-                  <div style={styles.pendingInfoGrid}>
-                    <div style={styles.pendingInfoItem}>
-                      <span style={styles.pendingLabel}>Voter ID</span>
-                      <strong style={styles.pendingValue}>
-                        {user.voterId || "N/A"}
-                      </strong>
-                    </div>
+            <div style={styles.pendingInfoItem}>
+              <span style={styles.pendingLabel}>Aadhaar</span>
+              <strong style={styles.pendingValue}>
+                {maskAadhaar(user.aadhaar)}
+              </strong>
+            </div>
 
-                    <div style={styles.pendingInfoItem}>
-                      <span style={styles.pendingLabel}>Mobile</span>
-                      <strong style={styles.pendingValue}>
-                        {user.mobile || "N/A"}
-                      </strong>
-                    </div>
-
-                    <div style={styles.pendingInfoItem}>
-                      <span style={styles.pendingLabel}>Aadhaar</span>
-                      <strong style={styles.pendingValue}>
-                        {maskAadhaar(user.aadhaar)}
-                      </strong>
-                    </div>
-
-                    <div style={styles.pendingInfoItem}>
-                      <span style={styles.pendingLabel}>Email Verified</span>
-                      <strong style={styles.pendingValue}>
-                        {user.emailVerified ? "Yes" : "No"}
-                      </strong>
-                    </div>
-                  </div>
-
-                  <div style={styles.pendingActionRow}>
-                    <button
-                      style={{
-                        ...styles.approveButton,
-                        opacity: approvingEmail === user.email ? 0.7 : 1,
-                        cursor:
-                          approvingEmail === user.email ? "not-allowed" : "pointer",
-                      }}
-                      onClick={() => approveUser(user.email)}
-                      disabled={approvingEmail === user.email}
-                    >
-                      {approvingEmail === user.email ? "Approving..." : "Approve User"}
-                    </button>
-                  </div>
-                </div>
-              ))}
+            <div style={styles.pendingInfoItem}>
+              <span style={styles.pendingLabel}>Email Verified</span>
+              <strong style={styles.pendingValue}>
+                {user.emailVerified ? "Yes" : "No"}
+              </strong>
             </div>
           </div>
-        )}
 
+          <div style={styles.pendingActionRow}>
+            <button
+              style={styles.approveButton}
+              onClick={() => approveUser(user.email)}
+            >
+              Approve User
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
         {loading ? (
           <p style={styles.loading}>Loading dashboard...</p>
         ) : (
@@ -782,32 +775,37 @@ const styles = {
     fontSize: "14px",
   },
   pendingGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-    gap: "16px",
-    alignItems: "stretch",
-  },
-  pendingCard: {
-    background: "#ffffff",
-    borderRadius: "16px",
-    padding: "16px",
-    border: "1px solid #e2e8f0",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    minHeight: "220px",
-  },
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+  gap: "16px",
+  alignItems: "stretch",
+},
+pendingCard: {
+  background: "#ffffff",
+  borderRadius: "16px",
+  padding: "16px",
+  border: "1px solid #e2e8f0",
+  boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "space-between",
+  minHeight: "220px",
+},
+pendingUserText: {
+  flex: 1,
+  minWidth: 0,
+},
+pendingActionRow: {
+  display: "flex",
+  justifyContent: "flex-end",
+  marginTop: "auto",
+},
   pendingTop: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "flex-start",
     gap: "10px",
     marginBottom: "14px",
-  },
-  pendingUserText: {
-    flex: 1,
-    minWidth: 0,
   },
   pendingName: {
     margin: "0 0 6px 0",
@@ -857,11 +855,6 @@ const styles = {
     color: "#0f172a",
     wordBreak: "break-word",
     lineHeight: "1.4",
-  },
-  pendingActionRow: {
-    display: "flex",
-    justifyContent: "flex-end",
-    marginTop: "auto",
   },
   approveButton: {
     background: "#16a34a",
