@@ -1,183 +1,98 @@
 import React, { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import axios from "axios";
 import API from "../config";
 
 function VerifyEmail() {
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const [email, setEmail] = useState(location.state?.email || "");
+  const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
-  const [resending, setResending] = useState(false);
 
   const handleVerify = async (e) => {
     e.preventDefault();
 
-    if (!email.trim() || !otp.trim()) {
+    if (!email || !otp) {
       alert("Please enter email and OTP");
       return;
     }
 
-    setLoading(true);
-
     try {
-      const res = await fetch(`${API}/api/verify-email`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: email.trim().toLowerCase(),
-          otp: otp.trim(),
-        }),
+      setLoading(true);
+
+      const res = await axios.post(`${API}/api/verify-email`, {
+        email,
+        otp,
       });
 
-      const data = await res.json();
-
-      if (data.success) {
+      if (res.data.success) {
         alert("Email verified successfully. Wait for admin approval.");
-        navigate("/");
+        setEmail("");
+        setOtp("");
       } else {
-        alert(data.message || "Verification failed");
+        alert(res.data.message || "Verification failed");
       }
     } catch (error) {
-  console.error("Verify email error:", error);
-  alert(error.message || "Server error");
-} finally {
+      console.log(error);
+      alert("Server error");
+    } finally {
       setLoading(false);
     }
   };
 
-  const handleResend = async () => {
-    if (!email.trim()) {
-      alert("Enter email first");
-      return;
-    }
-
-    setResending(true);
-
-    try {
-  const res = await fetch(`${API}/api/verify-email`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      email: email.trim().toLowerCase(),
-      otp: otp.trim(),
-    }),
-  });
-
-  const data = await res.json();
-
-  if (data.success) {
-    alert("Email verified successfully. Wait for admin approval.");
-    navigate("/");
-  } else {
-    alert(data.message || "Verification failed");
-  }
-} catch (error) {
-  console.error("Verify email error:", error);
-  alert("Server error");
-}
-
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <h1 style={styles.heading}>Verify Email</h1>
-        <p style={styles.subText}>Enter the OTP sent to your email</p>
+    <div style={styles.container}>
+      <h2>Email Verification</h2>
 
-        <form onSubmit={handleVerify} style={styles.form}>
-          <input
-            style={styles.input}
-            type="email"
-            placeholder="Email Address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+      <form onSubmit={handleVerify} style={styles.form}>
+        <input
+          type="email"
+          placeholder="Enter Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          style={styles.input}
+        />
 
-          <input
-            style={styles.input}
-            type="text"
-            placeholder="Enter 6-digit OTP"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-            maxLength="6"
-          />
+        <input
+          type="text"
+          placeholder="Enter OTP"
+          value={otp}
+          onChange={(e) => setOtp(e.target.value)}
+          style={styles.input}
+        />
 
-          <button style={styles.button} type="submit" disabled={loading}>
-            {loading ? "Please wait..." : "Verify Email"}
-          </button>
-        </form>
-
-        <button
-          style={styles.resendBtn}
-          onClick={handleResend}
-          disabled={resending}
-        >
-          {resending ? "Resending..." : "Resend OTP"}
+        <button type="submit" style={styles.button} disabled={loading}>
+          {loading ? "Verifying..." : "Verify OTP"}
         </button>
-      </div>
+      </form>
     </div>
   );
 }
 
 const styles = {
-  page: {
-    minHeight: "100vh",
-    background: "linear-gradient(135deg, #0f172a, #1d4ed8)",
+  container: {
     display: "flex",
-    justifyContent: "center",
+    flexDirection: "column",
     alignItems: "center",
-    padding: "20px",
-  },
-  card: {
-    width: "100%",
-    maxWidth: "450px",
-    background: "#ffffff",
-    borderRadius: "20px",
-    padding: "30px",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
-  },
-  heading: {
-    textAlign: "center",
-    marginBottom: "10px",
-  },
-  subText: {
-    textAlign: "center",
-    color: "#555",
-    marginBottom: "20px",
+    justifyContent: "center",
+    height: "100vh",
+    background: "#f1f5f9",
   },
   form: {
     display: "flex",
     flexDirection: "column",
-    gap: "15px",
+    gap: "12px",
+    width: "300px",
   },
   input: {
-    padding: "14px",
-    borderRadius: "10px",
+    padding: "10px",
+    borderRadius: "8px",
     border: "1px solid #ccc",
-    fontSize: "16px",
   },
   button: {
+    padding: "10px",
+    borderRadius: "8px",
     background: "#2563eb",
     color: "#fff",
     border: "none",
-    padding: "14px",
-    borderRadius: "10px",
-    fontSize: "16px",
-    cursor: "pointer",
-  },
-  resendBtn: {
-    width: "100%",
-    marginTop: "14px",
-    background: "#e5e7eb",
-    color: "#111827",
-    border: "none",
-    padding: "14px",
-    borderRadius: "10px",
-    fontSize: "16px",
     cursor: "pointer",
   },
 };
