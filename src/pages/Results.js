@@ -13,7 +13,6 @@ function Results() {
   const [showVoters, setShowVoters] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [lastUpdated, setLastUpdated] = useState("");
-  const pendingUsers = voters.filter(v => !v.isApproved);
   const [electionForm, setElectionForm] = useState({
     title: "National General Election 2026",
     status: "live",
@@ -28,6 +27,13 @@ function Results() {
 
     return () => clearInterval(interval);
   }, []);
+
+  const maskAadhaar = (aadhaar) => {
+    if (!aadhaar) return "N/A";
+    const str = String(aadhaar);
+    if (str.length < 4) return "XXXX-XXXX-" + str;
+    return "XXXX-XXXX-" + str.slice(-4);
+  };
 
   const loadDashboard = async (showLoader = true) => {
     if (showLoader) setLoading(true);
@@ -82,16 +88,6 @@ function Results() {
       if (showLoader) setLoading(false);
     }
   };
-  const maskAadhaar = (aadhaar) => {
-  if (!aadhaar) return "N/A";
-  const str = String(aadhaar);
-  if (str.length < 4) return "XXXX-XXXX-" + str;
-  return "XXXX-XXXX-" + str.slice(-4);
-};
-
-const pendingUsers = voters.filter(
-  (voter) => voter.emailVerified && !voter.isApproved
-);
 
   const updateElection = async (newStatus = null) => {
     if (!electionForm.title.trim()) {
@@ -165,6 +161,30 @@ const pendingUsers = voters.filter(
     }
   };
 
+  const approveUser = async (email) => {
+    try {
+      const res = await fetch(`${API}/api/admin/approve`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert("User approved successfully");
+        loadDashboard(false);
+      } else {
+        alert(data.message || "Approval failed");
+      }
+    } catch (err) {
+      console.error("Approve error:", err);
+      alert("Error approving user");
+    }
+  };
+
   const totalVotes = useMemo(
     () => results.reduce((sum, item) => sum + Number(item.votes || 0), 0),
     [results]
@@ -198,9 +218,15 @@ const pendingUsers = voters.filter(
         voter.name?.toLowerCase().includes(term) ||
         voter.email?.toLowerCase().includes(term) ||
         voter.voterId?.toLowerCase().includes(term) ||
-        voter.votedParty?.toLowerCase().includes(term)
+        voter.votedParty?.toLowerCase().includes(term) ||
+        voter.mobile?.toLowerCase().includes(term)
     );
   }, [voters, searchTerm]);
+
+  const pendingUsers = useMemo(
+    () => voters.filter((voter) => voter.emailVerified && !voter.isApproved),
+    [voters]
+  );
 
   const getPercentage = (votes) => {
     if (!totalVotes) return 0;
@@ -218,40 +244,25 @@ const pendingUsers = voters.filter(
       name: voter.name || "",
       email: voter.email || "",
       voterId: voter.voterId || "",
+      mobile: voter.mobile || "",
+      aadhaar: maskAadhaar(voter.aadhaar),
+      emailVerified: voter.emailVerified ? "Yes" : "No",
+      approved: voter.isApproved ? "Yes" : "No",
       voteStatus: voter.hasVoted ? "Voted" : "Pending",
       selectedParty: voter.votedParty || "",
       party: "",
       votes: "",
     }));
-  const approveUser = async (email) => {
-  try {
-    const res = await fetch(`${API}/api/admin/approve`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email }),
-    });
-
-    const data = await res.json();
-
-    if (data.success) {
-      alert("User approved successfully");
-      loadDashboard(false);
-    } else {
-      alert(data.message || "Approval failed");
-    }
-  } catch (err) {
-    console.error("Approve error:", err);
-    alert("Error approving user");
-  }
-};
 
     const resultRows = results.map((item) => ({
       type: "RESULT",
       name: "",
       email: "",
       voterId: "",
+      mobile: "",
+      aadhaar: "",
+      emailVerified: "",
+      approved: "",
       voteStatus: "",
       selectedParty: "",
       party: item.party || "",
@@ -259,11 +270,16 @@ const pendingUsers = voters.filter(
     }));
 
     const allRows = [...voterRows, ...resultRows];
+
     const headers = [
       "type",
       "name",
       "email",
       "voterId",
+      "mobile",
+      "aadhaar",
+      "emailVerified",
+      "approved",
       "voteStatus",
       "selectedParty",
       "party",
@@ -341,72 +357,74 @@ const pendingUsers = voters.filter(
           <button style={styles.logoutButton} onClick={handleLogout}>
             Logout
           </button>
-          
         </div>
+
         {pendingUsers.length > 0 && (
-  <div style={styles.pendingSection}>
-    <div style={styles.pendingHeader}>
-      <h2 style={styles.pendingTitle}>Pending Approvals</h2>
-      <span style={styles.pendingCount}>
-        {pendingUsers.length} Pending
-      </span>
-    </div>
-
-    <div style={styles.pendingGrid}>
-      {pendingUsers.map((user, index) => (
-        <div key={user.email || index} style={styles.pendingCard}>
-          <div style={styles.pendingTop}>
-            <div>
-              <h3 style={styles.pendingName}>{user.name || "Unnamed User"}</h3>
-              <p style={styles.pendingEmail}>{user.email || "No email"}</p>
+          <div style={styles.pendingSection}>
+            <div style={styles.pendingHeader}>
+              <h2 style={styles.pendingTitle}>Pending Approvals</h2>
+              <span style={styles.pendingCount}>
+                {pendingUsers.length} Pending
+              </span>
             </div>
 
-            <span style={styles.pendingBadge}>Pending</span>
+            <div style={styles.pendingGrid}>
+              {pendingUsers.map((user, index) => (
+                <div key={user.email || index} style={styles.pendingCard}>
+                  <div style={styles.pendingTop}>
+                    <div>
+                      <h3 style={styles.pendingName}>
+                        {user.name || "Unnamed User"}
+                      </h3>
+                      <p style={styles.pendingEmail}>{user.email || "No email"}</p>
+                    </div>
+
+                    <span style={styles.pendingBadge}>Pending</span>
+                  </div>
+
+                  <div style={styles.pendingInfoGrid}>
+                    <div style={styles.pendingInfoItem}>
+                      <span style={styles.pendingLabel}>Voter ID</span>
+                      <strong style={styles.pendingValue}>
+                        {user.voterId || "N/A"}
+                      </strong>
+                    </div>
+
+                    <div style={styles.pendingInfoItem}>
+                      <span style={styles.pendingLabel}>Mobile</span>
+                      <strong style={styles.pendingValue}>
+                        {user.mobile || "N/A"}
+                      </strong>
+                    </div>
+
+                    <div style={styles.pendingInfoItem}>
+                      <span style={styles.pendingLabel}>Aadhaar</span>
+                      <strong style={styles.pendingValue}>
+                        {maskAadhaar(user.aadhaar)}
+                      </strong>
+                    </div>
+
+                    <div style={styles.pendingInfoItem}>
+                      <span style={styles.pendingLabel}>Email Verified</span>
+                      <strong style={styles.pendingValue}>
+                        {user.emailVerified ? "Yes" : "No"}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <div style={styles.pendingActionRow}>
+                    <button
+                      style={styles.approveButton}
+                      onClick={() => approveUser(user.email)}
+                    >
+                      Approve User
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-
-          <div style={styles.pendingInfoGrid}>
-            <div style={styles.pendingInfoItem}>
-              <span style={styles.pendingLabel}>Voter ID</span>
-              <strong style={styles.pendingValue}>
-                {user.voterId || "N/A"}
-              </strong>
-            </div>
-
-            <div style={styles.pendingInfoItem}>
-              <span style={styles.pendingLabel}>Mobile</span>
-              <strong style={styles.pendingValue}>
-                {user.mobile || "N/A"}
-              </strong>
-            </div>
-
-            <div style={styles.pendingInfoItem}>
-              <span style={styles.pendingLabel}>Aadhaar</span>
-              <strong style={styles.pendingValue}>
-                {maskAadhaar(user.aadhaar)}
-              </strong>
-            </div>
-
-            <div style={styles.pendingInfoItem}>
-              <span style={styles.pendingLabel}>Email Verified</span>
-              <strong style={styles.pendingValue}>
-                {user.emailVerified ? "Yes" : "No"}
-              </strong>
-            </div>
-          </div>
-
-          <div style={styles.pendingActionRow}>
-            <button
-              style={styles.approveButton}
-              onClick={() => approveUser(user.email)}
-            >
-              Approve User
-            </button>
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-)}
+        )}
 
         {loading ? (
           <p style={styles.loading}>Loading dashboard...</p>
@@ -551,7 +569,7 @@ const pendingUsers = voters.filter(
                 <input
                   style={styles.searchInput}
                   type="text"
-                  placeholder="Search name, email, ID, party"
+                  placeholder="Search name, email, ID, party, mobile"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -575,6 +593,9 @@ const pendingUsers = voters.filter(
                                   <strong>{voter.name}</strong>
                                   <span style={styles.emailSmall}>
                                     {voter.email}
+                                  </span>
+                                  <span style={styles.emailSmall}>
+                                    {voter.mobile || "No mobile"}
                                   </span>
                                 </div>
                               </td>
@@ -669,7 +690,6 @@ const styles = {
     flexWrap: "wrap",
     marginBottom: "18px",
   },
-
   homeButton: {
     background: "#2563eb",
     color: "#fff",
@@ -715,115 +735,115 @@ const styles = {
     fontSize: "15px",
     cursor: "pointer",
   },
- pendingSection: {
-  background: "#f8fafc",
-  borderRadius: "18px",
-  padding: "20px",
-  marginBottom: "18px",
-  boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
-},
-pendingHeader: {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  gap: "12px",
-  flexWrap: "wrap",
-  marginBottom: "16px",
-},
-pendingTitle: {
-  margin: 0,
-  fontSize: "28px",
-  color: "#0f172a",
-},
-pendingCount: {
-  background: "#fef3c7",
-  color: "#92400e",
-  padding: "8px 14px",
-  borderRadius: "999px",
-  fontWeight: "bold",
-  fontSize: "14px",
-},
-pendingGrid: {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-  gap: "16px",
-},
-pendingCard: {
-  background: "#ffffff",
-  borderRadius: "16px",
-  padding: "16px",
-  border: "1px solid #e2e8f0",
-  boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
-},
-pendingTop: {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "flex-start",
-  gap: "10px",
-  marginBottom: "14px",
-},
-pendingName: {
-  margin: "0 0 6px 0",
-  fontSize: "20px",
-  color: "#0f172a",
-},
-pendingEmail: {
-  margin: 0,
-  color: "#64748b",
-  fontSize: "14px",
-  wordBreak: "break-word",
-},
-pendingBadge: {
-  background: "#fee2e2",
-  color: "#991b1b",
-  padding: "6px 10px",
-  borderRadius: "999px",
-  fontWeight: "bold",
-  fontSize: "12px",
-  whiteSpace: "nowrap",
-},
-pendingInfoGrid: {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr",
-  gap: "12px",
-  marginBottom: "16px",
-},
-pendingInfoItem: {
-  background: "#f8fafc",
-  borderRadius: "12px",
-  padding: "10px",
-},
-pendingLabel: {
-  display: "block",
-  fontSize: "12px",
-  color: "#64748b",
-  marginBottom: "5px",
-  fontWeight: "bold",
-},
-pendingValue: {
-  fontSize: "14px",
-  color: "#0f172a",
-  wordBreak: "break-word",
-},
-pendingActionRow: {
-  display: "flex",
-  justifyContent: "flex-end",
-},
-approveButton: {
-  background: "#16a34a",
-  color: "#fff",
-  border: "none",
-  padding: "11px 16px",
-  borderRadius: "10px",
-  cursor: "pointer",
-  fontWeight: "bold",
-  fontSize: "14px",
-},
   loading: {
     textAlign: "center",
     fontSize: "20px",
     color: "#334155",
     marginTop: "30px",
+  },
+  pendingSection: {
+    background: "#f8fafc",
+    borderRadius: "18px",
+    padding: "20px",
+    marginBottom: "18px",
+    boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
+  },
+  pendingHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "12px",
+    flexWrap: "wrap",
+    marginBottom: "16px",
+  },
+  pendingTitle: {
+    margin: 0,
+    fontSize: "28px",
+    color: "#0f172a",
+  },
+  pendingCount: {
+    background: "#fef3c7",
+    color: "#92400e",
+    padding: "8px 14px",
+    borderRadius: "999px",
+    fontWeight: "bold",
+    fontSize: "14px",
+  },
+  pendingGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+    gap: "16px",
+  },
+  pendingCard: {
+    background: "#ffffff",
+    borderRadius: "16px",
+    padding: "16px",
+    border: "1px solid #e2e8f0",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+  },
+  pendingTop: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: "10px",
+    marginBottom: "14px",
+  },
+  pendingName: {
+    margin: "0 0 6px 0",
+    fontSize: "20px",
+    color: "#0f172a",
+  },
+  pendingEmail: {
+    margin: 0,
+    color: "#64748b",
+    fontSize: "14px",
+    wordBreak: "break-word",
+  },
+  pendingBadge: {
+    background: "#fee2e2",
+    color: "#991b1b",
+    padding: "6px 10px",
+    borderRadius: "999px",
+    fontWeight: "bold",
+    fontSize: "12px",
+    whiteSpace: "nowrap",
+  },
+  pendingInfoGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "12px",
+    marginBottom: "16px",
+  },
+  pendingInfoItem: {
+    background: "#f8fafc",
+    borderRadius: "12px",
+    padding: "10px",
+  },
+  pendingLabel: {
+    display: "block",
+    fontSize: "12px",
+    color: "#64748b",
+    marginBottom: "5px",
+    fontWeight: "bold",
+  },
+  pendingValue: {
+    fontSize: "14px",
+    color: "#0f172a",
+    wordBreak: "break-word",
+  },
+  pendingActionRow: {
+    display: "flex",
+    justifyContent: "flex-end",
+  },
+  approveButton: {
+    background: "#16a34a",
+    color: "#fff",
+    border: "none",
+    padding: "11px 16px",
+    borderRadius: "10px",
+    cursor: "pointer",
+    fontWeight: "bold",
+    fontSize: "14px",
   },
   summaryGrid: {
     display: "grid",
@@ -1095,70 +1115,5 @@ approveButton: {
     fontSize: "12px",
   },
 };
-  {pendingUsers.length > 0 && (
-  <div style={styles.pendingSection}>
-    <div style={styles.pendingHeader}>
-      <h2 style={styles.pendingTitle}>Pending Approvals</h2>
-      <span style={styles.pendingCount}>
-        {pendingUsers.length} Pending
-      </span>
-    </div>
 
-    <div style={styles.pendingGrid}>
-      {pendingUsers.map((user, index) => (
-        <div key={user.email || index} style={styles.pendingCard}>
-          <div style={styles.pendingTop}>
-            <div>
-              <h3 style={styles.pendingName}>{user.name || "Unnamed User"}</h3>
-              <p style={styles.pendingEmail}>{user.email || "No email"}</p>
-            </div>
-
-            <span style={styles.pendingBadge}>Pending</span>
-          </div>
-
-          <div style={styles.pendingInfoGrid}>
-            <div style={styles.pendingInfoItem}>
-              <span style={styles.pendingLabel}>Voter ID</span>
-              <strong style={styles.pendingValue}>
-                {user.voterId || "N/A"}
-              </strong>
-            </div>
-
-            <div style={styles.pendingInfoItem}>
-              <span style={styles.pendingLabel}>Mobile</span>
-              <strong style={styles.pendingValue}>
-                {user.mobile || "N/A"}
-              </strong>
-            </div>
-
-            <div style={styles.pendingInfoItem}>
-              <span style={styles.pendingLabel}>Aadhaar</span>
-              <strong style={styles.pendingValue}>
-                {maskAadhaar(user.aadhaar)}
-              </strong>
-            </div>
-
-            <div style={styles.pendingInfoItem}>
-              <span style={styles.pendingLabel}>Vote Status</span>
-              <strong style={styles.pendingValue}>
-                {user.hasVoted ? "Voted" : "Not Voted"}
-              </strong>
-            </div>
-          </div>
-
-          <div style={styles.pendingActionRow}>
-            <button
-              style={styles.approveButton}
-              onClick={() => approveUser(user.email)}
-            >
-              Approve User
-            </button>
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-)}
-  
- 
 export default Results;
