@@ -9,14 +9,27 @@ function Results() {
   const [savingElection, setSavingElection] = useState(false);
   const [resettingElection, setResettingElection] = useState(false);
   const [approvingEmail, setApprovingEmail] = useState("");
+  const [addingCandidate, setAddingCandidate] = useState(false);
+  const [deletingCandidateId, setDeletingCandidateId] = useState("");
+
   const [results, setResults] = useState([]);
   const [voters, setVoters] = useState([]);
+  const [candidates, setCandidates] = useState([]);
   const [showVoters, setShowVoters] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [lastUpdated, setLastUpdated] = useState("");
+
   const [electionForm, setElectionForm] = useState({
     title: "National General Election 2026",
     status: "live",
+  });
+
+  const [candidateForm, setCandidateForm] = useState({
+    candidateName: "",
+    partyName: "",
+    symbolUrl: "",
+    photoUrl: "",
+    description: "",
   });
 
   useEffect(() => {
@@ -40,11 +53,13 @@ function Results() {
     if (showLoader) setLoading(true);
 
     try {
-      const [electionRes, votersRes, resultsRes] = await Promise.all([
-        fetch(`${API}/api/election`),
-        fetch(`${API}/api/voters`),
-        fetch(`${API}/api/results`),
-      ]);
+      const [electionRes, votersRes, resultsRes, candidatesRes] =
+        await Promise.all([
+          fetch(`${API}/api/election`),
+          fetch(`${API}/api/voters`),
+          fetch(`${API}/api/results`),
+          fetch(`${API}/api/candidates`),
+        ]);
 
       if (!electionRes.ok) {
         throw new Error(`/api/election failed: ${electionRes.status}`);
@@ -55,10 +70,14 @@ function Results() {
       if (!resultsRes.ok) {
         throw new Error(`/api/results failed: ${resultsRes.status}`);
       }
+      if (!candidatesRes.ok) {
+        throw new Error(`/api/candidates failed: ${candidatesRes.status}`);
+      }
 
       const electionData = await electionRes.json();
       const votersData = await votersRes.json();
       const resultsData = await resultsRes.json();
+      const candidatesData = await candidatesRes.json();
 
       if (electionData.success && electionData.election) {
         setElectionForm({
@@ -78,6 +97,12 @@ function Results() {
           ? resultsData
           : resultsData.success && Array.isArray(resultsData.results)
           ? resultsData.results
+          : []
+      );
+
+      setCandidates(
+        candidatesData.success && Array.isArray(candidatesData.candidates)
+          ? candidatesData.candidates
           : []
       );
 
@@ -192,6 +217,88 @@ function Results() {
     }
   };
 
+  const handleCandidateChange = (e) => {
+    setCandidateForm({
+      ...candidateForm,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const addCandidate = async (e) => {
+    e.preventDefault();
+
+    if (!candidateForm.candidateName.trim() || !candidateForm.partyName.trim()) {
+      alert("Candidate name and party name are required");
+      return;
+    }
+
+    setAddingCandidate(true);
+
+    try {
+      const res = await fetch(`${API}/api/admin/candidates`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          candidateName: candidateForm.candidateName.trim(),
+          partyName: candidateForm.partyName.trim(),
+          symbolUrl: candidateForm.symbolUrl.trim(),
+          photoUrl: candidateForm.photoUrl.trim(),
+          description: candidateForm.description.trim(),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert("Candidate added successfully");
+        setCandidateForm({
+          candidateName: "",
+          partyName: "",
+          symbolUrl: "",
+          photoUrl: "",
+          description: "",
+        });
+        loadDashboard(false);
+      } else {
+        alert(data.message || "Candidate add failed");
+      }
+    } catch (error) {
+      console.error("Add candidate error:", error);
+      alert("Server error");
+    } finally {
+      setAddingCandidate(false);
+    }
+  };
+
+  const deleteCandidate = async (candidateId) => {
+    const confirmed = window.confirm("Delete this candidate?");
+    if (!confirmed) return;
+
+    setDeletingCandidateId(candidateId);
+
+    try {
+      const res = await fetch(`${API}/api/admin/candidates/${candidateId}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert("Candidate deleted successfully");
+        loadDashboard(false);
+      } else {
+        alert(data.message || "Delete failed");
+      }
+    } catch (error) {
+      console.error("Delete candidate error:", error);
+      alert("Server error");
+    } finally {
+      setDeletingCandidateId("");
+    }
+  };
+
   const totalVotes = useMemo(
     () => results.reduce((sum, item) => sum + Number(item.votes || 0), 0),
     [results]
@@ -230,10 +337,10 @@ function Results() {
     );
   }, [voters, searchTerm]);
 
- const pendingUsers = useMemo(
-  () => voters.filter((voter) => voter.emailVerified && !voter.isApproved),
-  [voters]
-);
+  const pendingUsers = useMemo(
+    () => voters.filter((voter) => voter.emailVerified && !voter.isApproved),
+    [voters]
+  );
 
   const getPercentage = (votes) => {
     if (!totalVotes) return 0;
@@ -276,7 +383,22 @@ function Results() {
       votes: item.votes || 0,
     }));
 
-    const allRows = [...voterRows, ...resultRows];
+    const candidateRows = candidates.map((candidate) => ({
+      type: "CANDIDATE",
+      name: candidate.candidateName || "",
+      email: "",
+      voterId: "",
+      mobile: "",
+      aadhaar: "",
+      emailVerified: "",
+      approved: "",
+      voteStatus: "",
+      selectedParty: "",
+      party: candidate.partyName || "",
+      votes: "",
+    }));
+
+    const allRows = [...voterRows, ...resultRows, ...candidateRows];
 
     const headers = [
       "type",
@@ -367,70 +489,77 @@ function Results() {
         </div>
 
         {pendingUsers.length > 0 && (
-  <div style={styles.pendingSection}>
-    <div style={styles.pendingHeader}>
-      <h2 style={styles.pendingTitle}>Pending Approvals</h2>
-      <span style={styles.pendingCount}>
-        {pendingUsers.length} Pending
-      </span>
-    </div>
-
-    <div style={styles.pendingGrid}>
-      {pendingUsers.map((user, index) => (
-        <div key={user.email || index} style={styles.pendingCard}>
-          <div style={styles.pendingTop}>
-            <div style={styles.pendingUserText}>
-              <h3 style={styles.pendingName}>
-                {user.name || "Unnamed User"}
-              </h3>
-              <p style={styles.pendingEmail}>{user.email || "No email"}</p>
+          <div style={styles.pendingSection}>
+            <div style={styles.pendingHeader}>
+              <h2 style={styles.pendingTitle}>Pending Approvals</h2>
+              <span style={styles.pendingCount}>
+                {pendingUsers.length} Pending
+              </span>
             </div>
-            <span style={styles.pendingBadge}>Pending</span>
+
+            <div style={styles.pendingGrid}>
+              {pendingUsers.map((user, index) => (
+                <div key={user.email || index} style={styles.pendingCard}>
+                  <div style={styles.pendingTop}>
+                    <div style={styles.pendingUserText}>
+                      <h3 style={styles.pendingName}>
+                        {user.name || "Unnamed User"}
+                      </h3>
+                      <p style={styles.pendingEmail}>{user.email || "No email"}</p>
+                    </div>
+                    <span style={styles.pendingBadge}>Pending</span>
+                  </div>
+
+                  <div style={styles.pendingInfoGrid}>
+                    <div style={styles.pendingInfoItem}>
+                      <span style={styles.pendingLabel}>Voter ID</span>
+                      <strong style={styles.pendingValue}>
+                        {user.voterId || "N/A"}
+                      </strong>
+                    </div>
+
+                    <div style={styles.pendingInfoItem}>
+                      <span style={styles.pendingLabel}>Mobile</span>
+                      <strong style={styles.pendingValue}>
+                        {user.mobile || "N/A"}
+                      </strong>
+                    </div>
+
+                    <div style={styles.pendingInfoItem}>
+                      <span style={styles.pendingLabel}>Aadhaar</span>
+                      <strong style={styles.pendingValue}>
+                        {maskAadhaar(user.aadhaar)}
+                      </strong>
+                    </div>
+
+                    <div style={styles.pendingInfoItem}>
+                      <span style={styles.pendingLabel}>Email Verified</span>
+                      <strong style={styles.pendingValue}>
+                        {user.emailVerified ? "Yes" : "No"}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <div style={styles.pendingActionRow}>
+                    <button
+                      style={{
+                        ...styles.approveButton,
+                        opacity: approvingEmail === user.email ? 0.7 : 1,
+                        cursor:
+                          approvingEmail === user.email ? "not-allowed" : "pointer",
+                      }}
+                      onClick={() => approveUser(user.email)}
+                      disabled={approvingEmail === user.email}
+                    >
+                      {approvingEmail === user.email ? "Approving..." : "Approve User"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
+        )}
 
-          <div style={styles.pendingInfoGrid}>
-            <div style={styles.pendingInfoItem}>
-              <span style={styles.pendingLabel}>Voter ID</span>
-              <strong style={styles.pendingValue}>
-                {user.voterId || "N/A"}
-              </strong>
-            </div>
-
-            <div style={styles.pendingInfoItem}>
-              <span style={styles.pendingLabel}>Mobile</span>
-              <strong style={styles.pendingValue}>
-                {user.mobile || "N/A"}
-              </strong>
-            </div>
-
-            <div style={styles.pendingInfoItem}>
-              <span style={styles.pendingLabel}>Aadhaar</span>
-              <strong style={styles.pendingValue}>
-                {maskAadhaar(user.aadhaar)}
-              </strong>
-            </div>
-
-            <div style={styles.pendingInfoItem}>
-              <span style={styles.pendingLabel}>Email Verified</span>
-              <strong style={styles.pendingValue}>
-                {user.emailVerified ? "Yes" : "No"}
-              </strong>
-            </div>
-          </div>
-
-          <div style={styles.pendingActionRow}>
-            <button
-              style={styles.approveButton}
-              onClick={() => approveUser(user.email)}
-            >
-              Approve User
-            </button>
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-)}
         {loading ? (
           <p style={styles.loading}>Loading dashboard...</p>
         ) : (
@@ -511,6 +640,160 @@ function Results() {
                   >
                     Draft
                   </button>
+                </div>
+              </div>
+            </div>
+
+            <div style={styles.candidateSection}>
+              <div style={styles.candidateSectionHeader}>
+                <h2 style={styles.pendingTitle}>Manage Candidates</h2>
+                <span style={styles.pendingCount}>
+                  {candidates.length} Candidates
+                </span>
+              </div>
+
+              <div style={styles.candidateManageGrid}>
+                <div style={styles.candidateFormCard}>
+                  <h3 style={styles.formTitle}>Add Candidate</h3>
+
+                  <form onSubmit={addCandidate}>
+                    <div style={styles.formGroup}>
+                      <label style={styles.label}>Candidate Name</label>
+                      <input
+                        style={styles.input}
+                        type="text"
+                        name="candidateName"
+                        value={candidateForm.candidateName}
+                        onChange={handleCandidateChange}
+                        placeholder="Enter candidate name"
+                      />
+                    </div>
+
+                    <div style={styles.formGroup}>
+                      <label style={styles.label}>Party Name</label>
+                      <input
+                        style={styles.input}
+                        type="text"
+                        name="partyName"
+                        value={candidateForm.partyName}
+                        onChange={handleCandidateChange}
+                        placeholder="Enter party name"
+                      />
+                    </div>
+
+                    <div style={styles.formGroup}>
+                      <label style={styles.label}>Symbol Image URL</label>
+                      <input
+                        style={styles.input}
+                        type="text"
+                        name="symbolUrl"
+                        value={candidateForm.symbolUrl}
+                        onChange={handleCandidateChange}
+                        placeholder="Paste symbol image URL"
+                      />
+                    </div>
+
+                    <div style={styles.formGroup}>
+                      <label style={styles.label}>Photo URL</label>
+                      <input
+                        style={styles.input}
+                        type="text"
+                        name="photoUrl"
+                        value={candidateForm.photoUrl}
+                        onChange={handleCandidateChange}
+                        placeholder="Paste candidate photo URL"
+                      />
+                    </div>
+
+                    <div style={styles.formGroup}>
+                      <label style={styles.label}>Description</label>
+                      <textarea
+                        style={styles.textarea}
+                        name="description"
+                        value={candidateForm.description}
+                        onChange={handleCandidateChange}
+                        placeholder="Enter short description"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      style={styles.addCandidateBtn}
+                      disabled={addingCandidate}
+                    >
+                      {addingCandidate ? "Adding..." : "Add Candidate"}
+                    </button>
+                  </form>
+                </div>
+
+                <div style={styles.candidateListCard}>
+                  <div style={styles.panelHeader}>
+                    <h2 style={styles.sectionTitle}>Candidate List</h2>
+                    <span style={styles.miniInfo}>
+                      Active: {candidates.length}
+                    </span>
+                  </div>
+
+                  <div style={styles.candidateListWrap}>
+                    {candidates.length > 0 ? (
+                      candidates.map((candidate) => (
+                        <div
+                          key={candidate._id}
+                          style={styles.candidateItemCard}
+                        >
+                          <div style={styles.candidateItemTop}>
+                            <div style={styles.candidateMediaWrap}>
+                              <img
+                                src={
+                                  candidate.photoUrl ||
+                                  candidate.symbolUrl ||
+                                  "https://via.placeholder.com/80?text=Image"
+                                }
+                                alt={candidate.candidateName}
+                                style={styles.candidateImage}
+                                onError={(e) => {
+                                  e.target.src =
+                                    "https://via.placeholder.com/80?text=Image";
+                                }}
+                              />
+                            </div>
+
+                            <div style={styles.candidateTextWrap}>
+                              <h3 style={styles.candidateItemName}>
+                                {candidate.candidateName}
+                              </h3>
+                              <p style={styles.candidateItemParty}>
+                                {candidate.partyName}
+                              </p>
+                              {candidate.description ? (
+                                <p style={styles.candidateItemDesc}>
+                                  {candidate.description}
+                                </p>
+                              ) : null}
+                            </div>
+                          </div>
+
+                          <div style={styles.candidateActionRow}>
+                            <button
+                              style={{
+                                ...styles.deleteCandidateBtn,
+                                opacity:
+                                  deletingCandidateId === candidate._id ? 0.7 : 1,
+                              }}
+                              onClick={() => deleteCandidate(candidate._id)}
+                              disabled={deletingCandidateId === candidate._id}
+                            >
+                              {deletingCandidateId === candidate._id
+                                ? "Deleting..."
+                                : "Delete"}
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p style={styles.noData}>No candidates added yet.</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -775,37 +1058,32 @@ const styles = {
     fontSize: "14px",
   },
   pendingGrid: {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-  gap: "16px",
-  alignItems: "stretch",
-},
-pendingCard: {
-  background: "#ffffff",
-  borderRadius: "16px",
-  padding: "16px",
-  border: "1px solid #e2e8f0",
-  boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "space-between",
-  minHeight: "220px",
-},
-pendingUserText: {
-  flex: 1,
-  minWidth: 0,
-},
-pendingActionRow: {
-  display: "flex",
-  justifyContent: "flex-end",
-  marginTop: "auto",
-},
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+    gap: "16px",
+    alignItems: "stretch",
+  },
+  pendingCard: {
+    background: "#ffffff",
+    borderRadius: "16px",
+    padding: "16px",
+    border: "1px solid #e2e8f0",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    minHeight: "220px",
+  },
   pendingTop: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "flex-start",
     gap: "10px",
     marginBottom: "14px",
+  },
+  pendingUserText: {
+    flex: 1,
+    minWidth: 0,
   },
   pendingName: {
     margin: "0 0 6px 0",
@@ -855,6 +1133,11 @@ pendingActionRow: {
     color: "#0f172a",
     wordBreak: "break-word",
     lineHeight: "1.4",
+  },
+  pendingActionRow: {
+    display: "flex",
+    justifyContent: "flex-end",
+    marginTop: "auto",
   },
   approveButton: {
     background: "#16a34a",
@@ -959,6 +1242,136 @@ pendingActionRow: {
     color: "#fff",
     border: "none",
     padding: "12px 16px",
+    borderRadius: "10px",
+    cursor: "pointer",
+    fontWeight: "bold",
+  },
+  candidateSection: {
+    background: "#f8fafc",
+    borderRadius: "18px",
+    padding: "20px",
+    marginBottom: "18px",
+    boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
+  },
+  candidateSectionHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "12px",
+    flexWrap: "wrap",
+    marginBottom: "16px",
+  },
+  candidateManageGrid: {
+    display: "grid",
+    gridTemplateColumns: "0.95fr 1.05fr",
+    gap: "16px",
+  },
+  candidateFormCard: {
+    background: "#ffffff",
+    borderRadius: "16px",
+    padding: "18px",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+  },
+  candidateListCard: {
+    background: "#ffffff",
+    borderRadius: "16px",
+    padding: "18px",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+    display: "flex",
+    flexDirection: "column",
+  },
+  formTitle: {
+    marginTop: 0,
+    marginBottom: "16px",
+    color: "#0f172a",
+    fontSize: "22px",
+  },
+  formGroup: {
+    marginBottom: "14px",
+  },
+  textarea: {
+    width: "100%",
+    minHeight: "90px",
+    padding: "12px",
+    borderRadius: "10px",
+    border: "1px solid #cbd5e1",
+    fontSize: "15px",
+    boxSizing: "border-box",
+    resize: "vertical",
+    fontFamily: "Arial, sans-serif",
+  },
+  addCandidateBtn: {
+    background: "#2563eb",
+    color: "#fff",
+    border: "none",
+    padding: "12px 18px",
+    borderRadius: "10px",
+    cursor: "pointer",
+    fontWeight: "bold",
+    fontSize: "15px",
+    width: "100%",
+  },
+  candidateListWrap: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+    overflowY: "auto",
+  },
+  candidateItemCard: {
+    background: "#f8fafc",
+    border: "1px solid #e2e8f0",
+    borderRadius: "14px",
+    padding: "14px",
+  },
+  candidateItemTop: {
+    display: "flex",
+    gap: "14px",
+    alignItems: "flex-start",
+  },
+  candidateMediaWrap: {
+    flexShrink: 0,
+  },
+  candidateImage: {
+    width: "80px",
+    height: "80px",
+    borderRadius: "12px",
+    objectFit: "cover",
+    border: "1px solid #cbd5e1",
+    background: "#fff",
+  },
+  candidateTextWrap: {
+    flex: 1,
+    minWidth: 0,
+  },
+  candidateItemName: {
+    margin: "0 0 6px 0",
+    fontSize: "20px",
+    color: "#0f172a",
+    wordBreak: "break-word",
+  },
+  candidateItemParty: {
+    margin: "0 0 6px 0",
+    color: "#2563eb",
+    fontWeight: "bold",
+    fontSize: "15px",
+  },
+  candidateItemDesc: {
+    margin: 0,
+    color: "#64748b",
+    fontSize: "14px",
+    lineHeight: "1.5",
+    wordBreak: "break-word",
+  },
+  candidateActionRow: {
+    display: "flex",
+    justifyContent: "flex-end",
+    marginTop: "12px",
+  },
+  deleteCandidateBtn: {
+    background: "#dc2626",
+    color: "#fff",
+    border: "none",
+    padding: "10px 14px",
     borderRadius: "10px",
     cursor: "pointer",
     fontWeight: "bold",
