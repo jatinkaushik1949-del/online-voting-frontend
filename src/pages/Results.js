@@ -815,44 +815,66 @@ function Results() {
 
                 <div style={styles.resultsScroll}>
                   {results.length > 0 ? (
-                    results.map((item, index) => (
-                      <div key={index} style={styles.partyCard}>
-                        <div style={styles.resultCandidateRow}>
-                          <div style={styles.resultCandidateText}>
-                            <h2 style={styles.partyName}>
-                              {item.candidateName}
-                            </h2>
-                            <p style={styles.resultPartyText}>
-                              {item.partyName}
-                            </p>
-                          </div>
-                          <span style={styles.voteCount}>{item.votes} votes</span>
-                        </div>
+  results.map((item, index) => {
+    const matchedCandidate = candidates.find(
+      (candidate) =>
+        candidate.candidateName === item.candidateName &&
+        candidate.partyName === item.partyName
+    );
 
-                        <div style={styles.progressBarBackground}>
-                          <div
-                            style={{
-                              ...styles.progressBarFill,
-                              width: `${getPercentage(item.votes)}%`,
-                            }}
-                          />
-                        </div>
+    const imageSrc =
+      matchedCandidate?.photoUrl ||
+      matchedCandidate?.symbolUrl ||
+      "https://via.placeholder.com/80?text=Candidate";
 
-                        <p style={styles.percentageText}>
-                          {getPercentage(item.votes)}% of total votes
-                        </p>
-                      </div>
-                    ))
-                  ) : (
-                    <p style={styles.noData}>No votes available yet.</p>
-                  )}
+    return (
+      <div key={index} style={styles.partyCard}>
+        <div style={styles.resultCardTop}>
+          <div style={styles.resultImageWrap}>
+            <img
+              src={imageSrc}
+              alt={item.candidateName}
+              style={styles.resultCandidateImage}
+              onError={(e) => {
+                e.target.src = "https://via.placeholder.com/80?text=Candidate";
+              }}
+            />
+          </div>
 
+          <div style={styles.resultCandidateRow}>
+            <div style={styles.resultCandidateText}>
+              <h2 style={styles.partyName}>{item.candidateName}</h2>
+              <p style={styles.resultPartyText}>{item.partyName}</p>
+            </div>
+
+            <span style={styles.voteCount}>{item.votes} votes</span>
+          </div>
+        </div>
+
+        <div style={styles.progressBarBackground}>
+          <div
+            style={{
+              ...styles.progressBarFill,
+              width: `${getPercentage(item.votes)}%`,
+            }}
+          />
+        </div>
+
+        <p style={styles.percentageText}>
+          {getPercentage(item.votes)}% of total votes
+        </p>
+      </div>
+    );
+  })
+) : (
+  <p style={styles.noData}>No votes available yet.</p>
+)}
                   {winner && (
-                    <div style={styles.winnerBox}>
-                      🏆 Winner: <strong>{winner.candidateName}</strong> ({winner.partyName}) with{" "}
-                      <strong>{winner.votes}</strong> votes
-                    </div>
-                  )}
+  <div style={styles.winnerBox}>
+    🏆 Winner: <strong>{winner.candidateName}</strong> from{" "}
+    <strong>{winner.partyName}</strong> with <strong>{winner.votes}</strong> votes
+  </div>
+)}
                 </div>
               </div>
 
@@ -951,6 +973,33 @@ const styles = {
     padding: "22px",
     boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
   },
+  resultCardTop: {
+  display: "flex",
+  gap: "14px",
+  alignItems: "center",
+  marginBottom: "12px",
+  flexWrap: "wrap",
+},
+resultCandidateRow: {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  flex: 1,
+  minWidth: "220px",
+  flexWrap: "wrap",
+  gap: "8px",
+},
+resultImageWrap: {
+  flexShrink: 0,
+},
+resultCandidateImage: {
+  width: "72px",
+  height: "72px",
+  borderRadius: "14px",
+  objectFit: "cover",
+  border: "1px solid #cbd5e1",
+  background: "#fff",
+},
   headerTop: {
     display: "flex",
     justifyContent: "space-between",
