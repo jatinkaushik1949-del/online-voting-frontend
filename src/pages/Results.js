@@ -8,6 +8,7 @@ function Results() {
   const [loading, setLoading] = useState(true);
   const [savingElection, setSavingElection] = useState(false);
   const [resettingElection, setResettingElection] = useState(false);
+  const [approvingEmail, setApprovingEmail] = useState("");
   const [results, setResults] = useState([]);
   const [voters, setVoters] = useState([]);
   const [showVoters, setShowVoters] = useState(true);
@@ -165,6 +166,8 @@ function Results() {
 
   const approveUser = async (email) => {
     try {
+      setApprovingEmail(email);
+
       const res = await fetch(`${API}/api/admin/approve`, {
         method: "POST",
         headers: {
@@ -184,6 +187,8 @@ function Results() {
     } catch (err) {
       console.error("Approve error:", err);
       alert("Error approving user");
+    } finally {
+      setApprovingEmail("");
     }
   };
 
@@ -226,7 +231,7 @@ function Results() {
   }, [voters, searchTerm]);
 
   const pendingUsers = useMemo(
-    () => voters.filter((voter) => !voter.isApproved),
+    () => voters.filter((voter) => voter.emailVerified && !voter.isApproved),
     [voters]
   );
 
@@ -374,13 +379,12 @@ function Results() {
               {pendingUsers.map((user, index) => (
                 <div key={user.email || index} style={styles.pendingCard}>
                   <div style={styles.pendingTop}>
-                    <div>
+                    <div style={styles.pendingUserText}>
                       <h3 style={styles.pendingName}>
                         {user.name || "Unnamed User"}
                       </h3>
                       <p style={styles.pendingEmail}>{user.email || "No email"}</p>
                     </div>
-
                     <span style={styles.pendingBadge}>Pending</span>
                   </div>
 
@@ -416,10 +420,16 @@ function Results() {
 
                   <div style={styles.pendingActionRow}>
                     <button
-                      style={styles.approveButton}
+                      style={{
+                        ...styles.approveButton,
+                        opacity: approvingEmail === user.email ? 0.7 : 1,
+                        cursor:
+                          approvingEmail === user.email ? "not-allowed" : "pointer",
+                      }}
                       onClick={() => approveUser(user.email)}
+                      disabled={approvingEmail === user.email}
                     >
-                      Approve User
+                      {approvingEmail === user.email ? "Approving..." : "Approve User"}
                     </button>
                   </div>
                 </div>
@@ -773,8 +783,9 @@ const styles = {
   },
   pendingGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
     gap: "16px",
+    alignItems: "stretch",
   },
   pendingCard: {
     background: "#ffffff",
@@ -782,6 +793,10 @@ const styles = {
     padding: "16px",
     border: "1px solid #e2e8f0",
     boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    minHeight: "220px",
   },
   pendingTop: {
     display: "flex",
@@ -790,16 +805,23 @@ const styles = {
     gap: "10px",
     marginBottom: "14px",
   },
+  pendingUserText: {
+    flex: 1,
+    minWidth: 0,
+  },
   pendingName: {
     margin: "0 0 6px 0",
     fontSize: "20px",
     color: "#0f172a",
+    lineHeight: "1.3",
+    wordBreak: "break-word",
   },
   pendingEmail: {
     margin: 0,
     color: "#64748b",
     fontSize: "14px",
     wordBreak: "break-word",
+    lineHeight: "1.4",
   },
   pendingBadge: {
     background: "#fee2e2",
@@ -809,6 +831,7 @@ const styles = {
     fontWeight: "bold",
     fontSize: "12px",
     whiteSpace: "nowrap",
+    flexShrink: 0,
   },
   pendingInfoGrid: {
     display: "grid",
@@ -820,6 +843,7 @@ const styles = {
     background: "#f8fafc",
     borderRadius: "12px",
     padding: "10px",
+    minWidth: 0,
   },
   pendingLabel: {
     display: "block",
@@ -832,10 +856,12 @@ const styles = {
     fontSize: "14px",
     color: "#0f172a",
     wordBreak: "break-word",
+    lineHeight: "1.4",
   },
   pendingActionRow: {
     display: "flex",
     justifyContent: "flex-end",
+    marginTop: "auto",
   },
   approveButton: {
     background: "#16a34a",
@@ -843,9 +869,9 @@ const styles = {
     border: "none",
     padding: "11px 16px",
     borderRadius: "10px",
-    cursor: "pointer",
     fontWeight: "bold",
     fontSize: "14px",
+    minWidth: "130px",
   },
   summaryGrid: {
     display: "grid",
