@@ -1,1 +1,3 @@
-export const API_URL = "https://online-voting-backend-4ajp.onrender.com";
+const API = "https://online-voting-backend-4ajp.onrender.com";
+
+export default API;
