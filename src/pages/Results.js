@@ -13,6 +13,7 @@ function Results() {
   const [showVoters, setShowVoters] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [lastUpdated, setLastUpdated] = useState("");
+  const pendingUsers = voters.filter(v => !v.isApproved);
   const [electionForm, setElectionForm] = useState({
     title: "National General Election 2026",
     status: "live",
@@ -212,6 +213,26 @@ function Results() {
       party: "",
       votes: "",
     }));
+    const approveUser = async (email) => {
+  try {
+    const res = await fetch(`${API}/api/admin/approve`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      alert("User Approved!");
+      loadDashboard();
+    }
+  } catch (err) {
+    alert("Error approving user");
+  }
+};
 
     const resultRows = results.map((item) => ({
       type: "RESULT",
@@ -307,6 +328,16 @@ function Results() {
           <button style={styles.logoutButton} onClick={handleLogout}>
             Logout
           </button>
+          <h3>Pending Approvals</h3>
+
+{pendingUsers.map((user) => (
+  <div key={user.email}>
+    {user.name} ({user.email})
+    <button onClick={() => approveUser(user.email)}>
+      Approve
+    </button>
+  </div>
+))}
         </div>
 
         {loading ? (

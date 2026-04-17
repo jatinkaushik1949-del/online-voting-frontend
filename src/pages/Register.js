@@ -6,11 +6,12 @@ function Register() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    voterId: "",
-    password: "",
-  });
+  name: "",
+  email: "",
+  voterId: "",
+  aadhaar: "",
+  mobile: "",
+});
 
   const [loading, setLoading] = useState(false);
 
@@ -40,11 +41,12 @@ function Register() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name: name.trim(),
-          email: email.trim().toLowerCase(),
-          voterId: voterId.trim(),
-          password: password.trim(),
-        }),
+  name,
+  email,
+  voterId,
+  aadhaar,
+  mobile
+})
       });
 
       const data = await res.json();
@@ -105,6 +107,21 @@ function Register() {
             value={formData.password}
             onChange={handleChange}
           />
+          <input
+  type="text"
+  name="aadhaar"
+  placeholder="Aadhaar Number"
+  value={formData.aadhaar}
+  onChange={handleChange}
+/>
+
+<input
+  type="text"
+  name="mobile"
+  placeholder="Mobile Number"
+  value={formData.mobile}
+  onChange={handleChange}
+/>
 
           <button style={styles.button} type="submit" disabled={loading}>
             {loading ? "Please wait..." : "Register"}
