@@ -1279,8 +1279,8 @@ resultCandidateImage: {
     padding: "12px 16px",
     borderRadius: "10px",
     cursor: "pointer",
-    };
-      saveBtn: {
+    },
+     saveBtn: {
     background: "#2563eb",
     color: "#fff",
     border: "none",
