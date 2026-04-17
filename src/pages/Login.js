@@ -16,14 +16,12 @@ function Login() {
   const [electionConfig, setElectionConfig] = useState({
     title: "National General Election 2026",
     status: "live",
-    createdAt: "",
   });
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
-
     return () => clearInterval(timer);
   }, []);
 
@@ -35,7 +33,6 @@ function Login() {
     try {
       const res = await fetch(`${API}/api/election`);
       const data = await res.json();
-
       if (data.success) {
         setElectionConfig(data.election);
       }
@@ -125,10 +122,6 @@ function Login() {
 
   return (
     <div className={`page login-page theme-${theme}`}>
-      <div className="login-bg-orb orb-1" />
-      <div className="login-bg-orb orb-2" />
-      <div className="login-bg-orb orb-3" />
-
       <div className="login-theme-switch">
         <button className="btn btn-secondary" onClick={cycleTheme}>
           Change Theme
@@ -161,7 +154,7 @@ function Login() {
 
             <div className="status-mini-card">
               <span>Session Status</span>
-              <strong className={`session-text ${electionConfig.status}`}>
+              <strong>
                 {electionConfig.status === "live"
                   ? "Election Live"
                   : electionConfig.status === "closed"

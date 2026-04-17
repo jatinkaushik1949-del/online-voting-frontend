@@ -17,9 +17,20 @@ function Register() {
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "aadhaar" || name === "mobile") {
+      const digitsOnly = value.replace(/\D/g, "");
+      setFormData({
+        ...formData,
+        [name]: digitsOnly,
+      });
+      return;
+    }
+
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
   };
 
@@ -39,13 +50,13 @@ function Register() {
       return;
     }
 
-    if (aadhaar.trim().length !== 12) {
-      alert("Aadhaar number must be 12 digits");
+    if (!/^\d{12}$/.test(aadhaar.trim())) {
+      alert("Aadhaar number must be exactly 12 digits");
       return;
     }
 
-    if (mobile.trim().length !== 10) {
-      alert("Mobile number must be 10 digits");
+    if (!/^\d{10}$/.test(mobile.trim())) {
+      alert("Mobile number must be exactly 10 digits");
       return;
     }
 
@@ -70,8 +81,10 @@ function Register() {
       const data = await res.json();
 
       if (data.success) {
-        alert("Registration successful. Please wait for admin approval.");
-        navigate("/");
+        alert("Registration successful. OTP sent to your email.");
+        navigate("/verify-email", {
+          state: { email: email.trim().toLowerCase() },
+        });
       } else {
         alert(data.message || "Registration failed");
       }
@@ -130,7 +143,8 @@ function Register() {
             style={styles.input}
             type="text"
             name="aadhaar"
-            placeholder="Aadhaar Number"
+            maxLength="12"
+            placeholder="Aadhaar Number (12 digits)"
             value={formData.aadhaar}
             onChange={handleChange}
           />
@@ -139,7 +153,8 @@ function Register() {
             style={styles.input}
             type="text"
             name="mobile"
-            placeholder="Mobile Number"
+            maxLength="10"
+            placeholder="Mobile Number (10 digits)"
             value={formData.mobile}
             onChange={handleChange}
           />
@@ -168,7 +183,7 @@ const styles = {
   },
   card: {
     width: "100%",
-    maxWidth: "450px",
+    maxWidth: "480px",
     background: "#ffffff",
     borderRadius: "20px",
     padding: "30px",
