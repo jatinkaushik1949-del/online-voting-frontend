@@ -73,7 +73,9 @@ function Results() {
       );
 
       setResults(
-        resultsData.success && Array.isArray(resultsData.results)
+        Array.isArray(resultsData)
+          ? resultsData
+          : resultsData.success && Array.isArray(resultsData.results)
           ? resultsData.results
           : []
       );
@@ -224,9 +226,9 @@ function Results() {
   }, [voters, searchTerm]);
 
   const pendingUsers = useMemo(
-  () => voters.filter((voter) => !voter.isApproved),
-  [voters]
-);
+    () => voters.filter((voter) => !voter.isApproved),
+    [voters]
+  );
 
   const getPercentage = (votes) => {
     if (!totalVotes) return 0;
