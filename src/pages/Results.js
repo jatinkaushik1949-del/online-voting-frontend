@@ -224,9 +224,9 @@ function Results() {
   }, [voters, searchTerm]);
 
   const pendingUsers = useMemo(
-    () => voters.filter((voter) => voter.emailVerified && !voter.isApproved),
-    [voters]
-  );
+  () => voters.filter((voter) => !voter.isApproved),
+  [voters]
+);
 
   const getPercentage = (votes) => {
     if (!totalVotes) return 0;

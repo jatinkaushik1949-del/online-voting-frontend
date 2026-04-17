@@ -42,9 +42,9 @@ function VerifyEmail() {
         alert(data.message || "Verification failed");
       }
     } catch (error) {
-      console.error("Verify email error:", error);
-      alert("Server error");
-    } finally {
+  console.error("Verify email error:", error);
+  alert(error.message || "Server error");
+} finally {
       setLoading(false);
     }
   };
@@ -58,30 +58,29 @@ function VerifyEmail() {
     setResending(true);
 
     try {
-      const res = await fetch(`${API}/api/resend-otp`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: email.trim().toLowerCase(),
-        }),
-      });
+  const res = await fetch(`${API}/api/verify-email`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email: email.trim().toLowerCase(),
+      otp: otp.trim(),
+    }),
+  });
 
-      const data = await res.json();
+  const data = await res.json();
 
-      if (data.success) {
-        alert("OTP resent successfully");
-      } else {
-        alert(data.message || "Failed to resend OTP");
-      }
-    } catch (error) {
-      console.error("Resend OTP error:", error);
-      alert("Server error");
-    } finally {
-      setResending(false);
-    }
-  };
+  if (data.success) {
+    alert("Email verified successfully. Wait for admin approval.");
+    navigate("/");
+  } else {
+    alert(data.message || "Verification failed");
+  }
+} catch (error) {
+  console.error("Verify email error:", error);
+  alert("Server error");
+}
 
   return (
     <div style={styles.page}>
