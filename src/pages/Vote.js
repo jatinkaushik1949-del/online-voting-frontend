@@ -9,31 +9,31 @@ function Vote() {
   const [submitting, setSubmitting] = useState(false);
   const [user, setUser] = useState(null);
 
- useEffect(() => {
-  const loggedInUser = localStorage.getItem("loggedInUser");
+  useEffect(() => {
+    const loggedInUser = localStorage.getItem("loggedInUser");
 
-  if (!loggedInUser) {
-    alert("Please login first");
-    window.location.href = "/";
-    return;
-  }
+    if (!loggedInUser) {
+      alert("Please login first");
+      window.location.href = "/";
+      return;
+    }
 
-  const savedUserData = localStorage.getItem("voterData");
-  const parsedUser = savedUserData ? JSON.parse(savedUserData) : null;
+    const savedUserData = localStorage.getItem("voterData");
+    const parsedUser = savedUserData ? JSON.parse(savedUserData) : null;
 
-  if (parsedUser?.hasVoted) {
-    alert("You have already voted");
-    window.location.href = "/results";
-    return;
-  }
+    if (parsedUser?.hasVoted) {
+      alert("You have already voted");
+      window.location.href = "/results";
+      return;
+    }
 
-  setUser({
-    email: loggedInUser,
-    hasVoted: parsedUser?.hasVoted || false,
-  });
+    setUser({
+      email: loggedInUser,
+      hasVoted: parsedUser?.hasVoted || false,
+    });
 
-  fetchCandidates();
-}, []);
+    fetchCandidates();
+  }, []);
 
   const fetchCandidates = async () => {
     try {
@@ -70,10 +70,11 @@ function Vote() {
 
       if (res.data.success) {
         alert(res.data.message);
-const updatedUser = { ...user, hasVoted: true };
-localStorage.setItem("voterData", JSON.stringify(updatedUser));
 
-window.location.href = "/results";
+        const updatedUser = { ...user, hasVoted: true };
+        localStorage.setItem("voterData", JSON.stringify(updatedUser));
+
+        window.location.href = "/results";
       } else {
         alert(res.data.message || "Vote failed");
       }

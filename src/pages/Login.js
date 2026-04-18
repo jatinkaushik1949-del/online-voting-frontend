@@ -111,6 +111,13 @@ function Login() {
       if (data.success) {
         localStorage.setItem("adminLoggedIn", "true");
         localStorage.removeItem("loggedInUser");
+        localStorage.setItem(
+  "voterData",
+  JSON.stringify({
+    email: email.trim().toLowerCase(),
+    hasVoted: data.voter?.hasVoted || false,
+  })
+);
         alert("Admin login successful");
         navigate("/results");
       } else {

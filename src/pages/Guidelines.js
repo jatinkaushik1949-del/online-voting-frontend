@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ThemeContext } from "../context/ThemeContext";
 import Navbar from "../components/Navbar";
@@ -8,18 +8,19 @@ function Guidelines() {
   const navigate = useNavigate();
   const { theme } = useContext(ThemeContext);
   const [agreed, setAgreed] = useState(false);
-  useEffect(() => {
-  const loggedInUser = localStorage.getItem("loggedInUser");
 
-  if (!loggedInUser) {
-    alert("Please login first");
-    navigate("/");
-  }
-}, [navigate]);
+  useEffect(() => {
+    const loggedInUser = localStorage.getItem("loggedInUser");
+
+    if (!loggedInUser) {
+      alert("Please login first");
+      navigate("/");
+    }
+  }, [navigate]);
 
   const electionConfig = JSON.parse(localStorage.getItem("electionConfig")) || {
     title: "National General Election 2026",
-    status: "closed"
+    status: "closed",
   };
 
   const guidelines = useMemo(
@@ -27,45 +28,45 @@ function Guidelines() {
       {
         icon: "🗳️",
         title: "Vote carefully",
-        text: "Once your vote is submitted, it cannot be changed again."
+        text: "Once your vote is submitted, it cannot be changed again.",
       },
       {
         icon: "🔐",
         title: "Only one vote is allowed",
-        text: "Each voter can cast only one vote in the election."
+        text: "Each voter can cast only one vote in the election.",
       },
       {
         icon: "📡",
         title: "Election must be live",
-        text: "Voting is allowed only when the election session is live."
+        text: "Voting is allowed only when the election session is live.",
       },
       {
         icon: "🛡️",
         title: "Results are admin controlled",
-        text: "Detailed results and election control are visible only to admin."
+        text: "Detailed results and election control are visible only to admin.",
       },
       {
         icon: "⏱️",
         title: "Keep your session active",
-        text: "Avoid unnecessary refresh during the voting process."
-      }
+        text: "Avoid unnecessary refresh during the voting process.",
+      },
     ],
     []
   );
 
   const handleProceed = () => {
-  if (!agreed) return;
+    if (!agreed) return;
 
-  const loggedInUser = localStorage.getItem("loggedInUser");
+    const loggedInUser = localStorage.getItem("loggedInUser");
 
-  if (!loggedInUser) {
-    alert("Please login first");
-    navigate("/");
-    return;
-  }
+    if (!loggedInUser) {
+      alert("Please login first");
+      navigate("/");
+      return;
+    }
 
-  navigate("/vote");
-};
+    navigate("/vote");
+  };
 
   return (
     <div className={`page theme-${theme}`}>
