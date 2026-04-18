@@ -21,17 +21,17 @@ function Register() {
 
     if (name === "aadhaar" || name === "mobile") {
       const digitsOnly = value.replace(/\D/g, "");
-      setFormData({
-        ...formData,
+      setFormData((prev) => ({
+        ...prev,
         [name]: digitsOnly,
-      });
+      }));
       return;
     }
 
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [name]: value,
-    });
+    }));
   };
 
   const handleRegister = async (e) => {
@@ -81,9 +81,9 @@ function Register() {
       const data = await res.json();
 
       if (data.success) {
-        alert("Registration successful. OTP sent to your email.");
+        alert(data.message || "OTP sent to your email");
         navigate("/verify-email", {
-          state: { email: email.trim().toLowerCase() },
+          state: { email: data.email || email.trim().toLowerCase() },
         });
       } else {
         alert(data.message || "Registration failed");

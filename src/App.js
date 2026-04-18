@@ -2,9 +2,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import VerifyEmail from "./pages/VerifyEmail";
+import Guidelines from "./pages/Guidelines";
 import Vote from "./pages/Vote";
 import Results from "./pages/Results";
-import Guidelines from "./pages/Guidelines";
 
 function App() {
   return (

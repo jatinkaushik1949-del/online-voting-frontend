@@ -33,8 +33,10 @@ function Login() {
     try {
       const res = await fetch(`${API}/api/election`);
       const data = await res.json();
-      if (data.success) {
+
+      if (data.success && data.election) {
         setElectionConfig(data.election);
+        localStorage.setItem("electionConfig", JSON.stringify(data.election));
       }
     } catch (error) {
       console.error("Election fetch error:", error);
@@ -65,13 +67,24 @@ function Login() {
       const data = await res.json();
 
       if (data.success) {
+        const savedEmail = email.trim().toLowerCase();
+
+        localStorage.setItem("loggedInUser", savedEmail);
+        localStorage.removeItem("adminLoggedIn");
+        localStorage.setItem("sessionStartTime", Date.now().toString());
+
         localStorage.setItem(
-  "voterData",
-  JSON.stringify({
-    email: email.trim().toLowerCase(),
-    hasVoted: data.voter?.hasVoted || false,
-  })
-);
+          "voterData",
+          JSON.stringify({
+            email: savedEmail,
+            hasVoted: data.voter?.hasVoted || false,
+            name: data.voter?.name || "",
+            voterId: data.voter?.voterId || "",
+            aadhaar: data.voter?.aadhaar || "",
+            mobile: data.voter?.mobile || "",
+          })
+        );
+
         alert("Voter login successful");
         navigate("/guidelines");
       } else {
@@ -111,13 +124,7 @@ function Login() {
       if (data.success) {
         localStorage.setItem("adminLoggedIn", "true");
         localStorage.removeItem("loggedInUser");
-        localStorage.setItem(
-  "voterData",
-  JSON.stringify({
-    email: email.trim().toLowerCase(),
-    hasVoted: data.voter?.hasVoted || false,
-  })
-);
+        localStorage.removeItem("voterData");
         alert("Admin login successful");
         navigate("/results");
       } else {
