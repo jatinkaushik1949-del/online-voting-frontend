@@ -318,10 +318,10 @@ function Results() {
     return ((votedCount / totalVoters) * 100).toFixed(1);
   }, [votedCount, totalVoters]);
 
-  const winner = useMemo(() => {
-    if (!results.length) return null;
-    return [...results].sort((a, b) => b.votes - a.votes)[0];
-  }, [results]);
+const winner = useMemo(() => {
+  if (!results.length) return null;
+  return [...results].sort((a, b) => b.votes - a.votes)[0];
+}, [results]);
 
   const filteredVoters = useMemo(() => {
     if (!searchTerm.trim()) return voters;
@@ -418,15 +418,14 @@ function Results() {
       "party",
       "votes",
     ];
-
-    const csv = [
-      headers.join(","),
-      ...allRows.map((row) =>
-        headers
-          .map((header) => `"${String(row[header] ?? "").replace(/"/g, '""')}"`)
-          .join(",")
-      ),
-    ].join("\n");
+const csv = [
+  headers.join(","),
+  ...allRows.map((row) =>
+    headers
+      .map((header) => `"${String(row[header] ?? "").replace(/"/g, '""')}"`)
+      .join(",")
+  ),
+].join("\n");
 
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -459,10 +458,10 @@ function Results() {
           <div style={styles.rightHeader}>
             <span
               style={{
-                ...styles.statusPill,
-                background: `${statusColor}20`,
-                color: statusColor,
-              }}
+  ...styles.statusPill,
+  background: `${statusColor}20`,
+  color: statusColor,
+}}
             >
               {electionForm.status.toUpperCase()}
             </span>
@@ -854,9 +853,9 @@ function Results() {
         <div style={styles.progressBarBackground}>
           <div
             style={{
-              ...styles.progressBarFill,
-              width: `${getPercentage(item.votes)}%`,
-            }}
+  ...styles.progressBarFill,
+  width: `${getPercentage(item.votes)}%`,
+}}
           />
         </div>
 
@@ -1272,14 +1271,6 @@ resultCandidateImage: {
     gap: "10px",
     flexWrap: "wrap",
   },
-  saveBtn: {
-    background: "#2563eb",
-    color: "#fff",
-    border: "none",
-    padding: "12px 16px",
-    borderRadius: "10px",
-    cursor: "pointer",
-    },
      saveBtn: {
     background: "#2563eb",
     color: "#fff",

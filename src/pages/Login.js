@@ -65,9 +65,13 @@ function Login() {
       const data = await res.json();
 
       if (data.success) {
-        localStorage.setItem("loggedInUser", email.trim().toLowerCase());
-        localStorage.removeItem("adminLoggedIn");
-        localStorage.setItem("sessionStartTime", Date.now().toString());
+        localStorage.setItem(
+  "voterData",
+  JSON.stringify({
+    email: email.trim().toLowerCase(),
+    hasVoted: data.voter?.hasVoted || false,
+  })
+);
         alert("Voter login successful");
         navigate("/guidelines");
       } else {

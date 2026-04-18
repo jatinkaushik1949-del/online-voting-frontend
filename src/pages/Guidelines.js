@@ -8,6 +8,14 @@ function Guidelines() {
   const navigate = useNavigate();
   const { theme } = useContext(ThemeContext);
   const [agreed, setAgreed] = useState(false);
+  useEffect(() => {
+  const loggedInUser = localStorage.getItem("loggedInUser");
+
+  if (!loggedInUser) {
+    alert("Please login first");
+    navigate("/");
+  }
+}, [navigate]);
 
   const electionConfig = JSON.parse(localStorage.getItem("electionConfig")) || {
     title: "National General Election 2026",
@@ -46,9 +54,18 @@ function Guidelines() {
   );
 
   const handleProceed = () => {
-    if (!agreed) return;
-    navigate("/vote");
-  };
+  if (!agreed) return;
+
+  const loggedInUser = localStorage.getItem("loggedInUser");
+
+  if (!loggedInUser) {
+    alert("Please login first");
+    navigate("/");
+    return;
+  }
+
+  navigate("/vote");
+};
 
   return (
     <div className={`page theme-${theme}`}>
