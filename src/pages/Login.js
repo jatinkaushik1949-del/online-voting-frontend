@@ -22,6 +22,7 @@ function Login() {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
+
     return () => clearInterval(timer);
   }, []);
 
@@ -125,6 +126,7 @@ function Login() {
         localStorage.setItem("adminLoggedIn", "true");
         localStorage.removeItem("loggedInUser");
         localStorage.removeItem("voterData");
+
         alert("Admin login successful");
         navigate("/results");
       } else {
@@ -190,6 +192,7 @@ function Login() {
             >
               Voter Login
             </button>
+
             <button
               className={`login-tab-btn ${activeTab === "admin" ? "active" : ""}`}
               onClick={() => setActiveTab("admin")}

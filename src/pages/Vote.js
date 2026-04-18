@@ -11,6 +11,11 @@ function Vote() {
 
   useEffect(() => {
     const loggedInUser = localStorage.getItem("loggedInUser");
+    const savedUserData = localStorage.getItem("voterData");
+
+    console.log("VOTE PAGE LIVE");
+    console.log("loggedInUser:", loggedInUser);
+    console.log("voterData:", savedUserData);
 
     if (!loggedInUser) {
       alert("Please login first");
@@ -18,7 +23,6 @@ function Vote() {
       return;
     }
 
-    const savedUserData = localStorage.getItem("voterData");
     const parsedUser = savedUserData ? JSON.parse(savedUserData) : null;
 
     if (parsedUser?.hasVoted) {
@@ -38,7 +42,6 @@ function Vote() {
   const fetchCandidates = async () => {
     try {
       const res = await axios.get(`${API}/api/candidates`);
-
       if (res.data.success) {
         setCandidates(res.data.candidates || []);
       } else {
@@ -152,11 +155,9 @@ function Vote() {
                 <h2 style={styles.name}>{candidate.candidateName}</h2>
                 <p style={styles.party}>{candidate.partyName}</p>
 
-                {candidate.description ? (
-                  <p style={styles.description}>{candidate.description}</p>
-                ) : (
-                  <p style={styles.description}>No description available.</p>
-                )}
+                <p style={styles.description}>
+                  {candidate.description || "No description available."}
+                </p>
               </label>
             ))}
           </div>
