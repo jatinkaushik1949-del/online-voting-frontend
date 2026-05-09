@@ -13,10 +13,6 @@ function Vote() {
     const loggedInUser = localStorage.getItem("loggedInUser");
     const savedUserData = localStorage.getItem("voterData");
 
-    console.log("VOTE PAGE LIVE");
-    console.log("loggedInUser:", loggedInUser);
-    console.log("voterData:", savedUserData);
-
     if (!loggedInUser) {
       alert("Please login first");
       window.location.href = "/";
@@ -42,6 +38,7 @@ function Vote() {
   const fetchCandidates = async () => {
     try {
       const res = await axios.get(`${API}/api/candidates`);
+
       if (res.data.success) {
         setCandidates(res.data.candidates || []);
       } else {
@@ -63,6 +60,18 @@ function Vote() {
 
     if (!user) return;
 
+    const selectedCandidateData = candidates.find(
+      (candidate) => candidate._id === selectedCandidate
+    );
+
+    const confirmed = window.confirm(
+      `Are you sure you want to vote for ${
+        selectedCandidateData?.candidateName || "this candidate"
+      } (${selectedCandidateData?.partyName || "Party"})?`
+    );
+
+    if (!confirmed) return;
+
     try {
       setSubmitting(true);
 
@@ -72,7 +81,7 @@ function Vote() {
       });
 
       if (res.data.success) {
-        alert(res.data.message);
+        alert(res.data.message || "Vote submitted successfully");
 
         const updatedUser = { ...user, hasVoted: true };
         localStorage.setItem("voterData", JSON.stringify(updatedUser));

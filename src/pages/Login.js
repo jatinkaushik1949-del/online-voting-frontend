@@ -19,10 +19,7 @@ function Login() {
   });
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -57,12 +54,8 @@ function Login() {
     try {
       const res = await fetch(`${API}/api/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: email.trim().toLowerCase(),
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
       });
 
       const data = await res.json();
@@ -112,12 +105,8 @@ function Login() {
     try {
       const res = await fetch(`${API}/api/admin/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          password: adminPassword.trim(),
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: adminPassword.trim() }),
       });
 
       const data = await res.json();
@@ -186,7 +175,9 @@ function Login() {
 
           <div className="login-tab-switch">
             <button
-              className={`login-tab-btn ${activeTab === "voter" ? "active" : ""}`}
+              className={`login-tab-btn ${
+                activeTab === "voter" ? "active" : ""
+              }`}
               onClick={() => setActiveTab("voter")}
               type="button"
             >
@@ -194,7 +185,9 @@ function Login() {
             </button>
 
             <button
-              className={`login-tab-btn ${activeTab === "admin" ? "active" : ""}`}
+              className={`login-tab-btn ${
+                activeTab === "admin" ? "active" : ""
+              }`}
               onClick={() => setActiveTab("admin")}
               type="button"
             >

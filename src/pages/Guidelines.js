@@ -77,7 +77,10 @@ function Guidelines() {
           <div className="guidelines-header">
             <div className="guidelines-badge">Voter Instructions</div>
             <h1>Before You Vote</h1>
-            <p>Please read and understand these instructions before proceeding to the ballot.</p>
+            <p>
+              Please read and understand these instructions before proceeding to
+              the ballot.
+            </p>
           </div>
 
           <div className="guidelines-status-row centered-status-row">
@@ -131,7 +134,9 @@ function Guidelines() {
             </button>
 
             <button
-              className={`btn btn-primary ${!agreed ? "btn-disabled-look" : ""}`}
+              className={`btn btn-primary ${
+                !agreed ? "btn-disabled-look" : ""
+              }`}
               onClick={handleProceed}
               disabled={!agreed}
             >
